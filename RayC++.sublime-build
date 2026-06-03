@@ -1,0 +1,15 @@
+{
+    "cmd": ["bash", "-c", "g++ '${file}' -o '${file_path}/timeless' -I/home/gamedev/raylib/src -L/home/gamedev/raylib/src -lraylib -lm -lX11 -lpthread -lXrandr -lXi -ldl -lGL && echo 'Build successful! Use Ctrl+Shift+B to run'"],
+    "file_regex": "^(..[^:]*):([0-9]+):?([0-9]+)?:? (.*)$",
+    "working_dir": "${file_path}",
+    "selector": "source.c++, source.cpp",
+    "shell": false,
+    "variants":
+    [
+        {
+            "name": "Run",
+            "cmd": ["bash", "-c", "g++ '${file}' -o '${file_path}/timeless' -I/home/gamedev/raylib/src -L/home/gamedev/raylib/src -lraylib -lm -lX11 -lpthread -lXrandr -lXi -ldl -lGL && '${file_path}/timeless'"],
+            "shell": false
+        }
+    ]
+}
