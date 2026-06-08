@@ -1,773 +1,504 @@
-package sb
+package main
 
-import rl "vendor:raylib"
 import "core:fmt"
+import "core:strings"
 import "core:math"
+import rl "vendor:raylib"
 
-PANEL_COLOR  :: rl.Color{20,  20,  35,  240}
-ACCENT_COLOR :: rl.Color{80,  180, 255, 255}
-TEXT_COLOR   :: rl.Color{220, 220, 220, 255}
-WARN_COLOR   :: rl.Color{255, 80,  80,  255}
-GOLD_COLOR   :: rl.Color{255, 200, 60,  255}
-BIND_COLOR   :: rl.Color{180, 80,  255, 255}
-DARK_BG      :: rl.Color{12,  12,  22,  255}
-TALK_COLOR   :: rl.Color{80,  220, 180, 255}
-WEAK_COLOR   :: rl.Color{255, 255, 60,  255}
+COL_BG      :: rl.Color{18, 14, 28, 255}
+COL_PANEL   :: rl.Color{30, 22, 46, 255}
+COL_PANEL_2 :: rl.Color{45, 32, 64, 255}
+COL_BORDER  :: rl.Color{120, 100, 160, 255}
+COL_HILITE  :: rl.Color{230, 200, 90, 255}
+COL_HP      :: rl.Color{210, 60, 70, 255}
+COL_HP_BG   :: rl.Color{70, 30, 35, 255}
+COL_SOUL    :: rl.Color{80, 140, 230, 255}
+COL_SOUL_BG :: rl.Color{30, 45, 70, 255}
+COL_TEXT    :: rl.Color{235, 230, 245, 255}
+COL_DIM     :: rl.Color{140, 130, 155, 255}
+COL_BIND    :: rl.Color{80, 230, 140, 255}
+COL_BIND_BG :: rl.Color{20, 70, 40, 255}
 
-// dynamic screen helpers
-sw :: proc() -> i32 { return rl.GetScreenWidth()  }
-sh :: proc() -> i32 { return rl.GetScreenHeight() }
-swf :: proc() -> f32 { return f32(rl.GetScreenWidth())  }
-shf :: proc() -> f32 { return f32(rl.GetScreenHeight()) }
-
-// package-level assets
-bg_rooms:      [3]rl.Texture2D
-bg_explore:    rl.Texture2D
-player_idle:   rl.Texture2D
-player_atk:    rl.Texture2D
-enemy_sheet:   rl.Texture2D
-assets_loaded: bool
-
-music_overworld: rl.Music
-music_combat:    rl.Music
-active_music:    ^rl.Music
-
-load_assets :: proc() {
-	bg_rooms[0]  = rl.LoadTexture("art/room1.jpg")
-	bg_rooms[1]  = rl.LoadTexture("art/room2.jpg")
-	bg_rooms[2]  = rl.LoadTexture("art/room3.jpg")
-	bg_explore   = rl.LoadTexture("art/city_bg.jpg")
-	player_idle  = rl.LoadTexture("art/player_Idle 48x48.png")
-	player_atk   = rl.LoadTexture("art/player_katana run 48x48.png")
-	enemy_sheet  = rl.LoadTexture("art/enemy_spritesheet.png")
-
-	music_overworld = rl.LoadMusicStream("Medieval Traveler's Journey _ Medieval Music for Relaxation & Adventure [o4UC3UUvXBw].mp3")
-	music_combat    = rl.LoadMusicStream("Dragon Ball Z - Sound Effects - Download!.mp3")
-	music_overworld.looping = true
-	music_combat.looping    = true
-
-	assets_loaded = true
+_cs :: proc(s: string) -> cstring {
+	return strings.clone_to_cstring(s, context.temp_allocator)
 }
 
-unload_assets :: proc() {
-	if !assets_loaded do return
-	for i in 0..<3 do rl.UnloadTexture(bg_rooms[i])
-	rl.UnloadTexture(bg_explore)
-	rl.UnloadTexture(player_idle)
-	rl.UnloadTexture(player_atk)
-	rl.UnloadTexture(enemy_sheet)
-	rl.UnloadMusicStream(music_overworld)
-	rl.UnloadMusicStream(music_combat)
+draw_text_at :: proc(text: string, x, y, size: i32, color: rl.Color) {
+	rl.DrawText(_cs(text), x, y, size, color)
 }
 
-play_music :: proc(m: ^rl.Music) {
-	if active_music == m do return
-	if active_music != nil do rl.StopMusicStream(active_music^)
-	active_music = m
-	rl.PlayMusicStream(active_music^)
-}
-
-tick_music :: proc() {
-	if active_music != nil do rl.UpdateMusicStream(active_music^)
-}
-
-// ---- draw helpers ----
-
-cstr :: proc(s: string) -> cstring {
-	buf := make([]byte, len(s)+1, context.temp_allocator)
-	copy(buf, s)
-	buf[len(s)] = 0
-	return cstring(raw_data(buf))
-}
-
-draw_panel :: proc(x, y, w, h: i32, col: rl.Color) {
-	rl.DrawRectangle(x, y, w, h, col)
-	rl.DrawRectangleLines(x, y, w, h, ACCENT_COLOR)
-}
-
-draw_text :: proc(text: string, x, y: i32, size: i32, col: rl.Color) {
-	rl.DrawText(cstr(text), x, y, size, col)
-}
-
-draw_bar :: proc(x, y, w, h: i32, val, maxval: int, fill_col: rl.Color) {
-	rl.DrawRectangle(x, y, w, h, {40, 40, 40, 255})
-	if maxval > 0 {
-		filled := i32(val) * w / i32(maxval)
-		if filled > w do filled = w
-		if filled < 0 do filled = 0
-		rl.DrawRectangle(x, y, filled, h, fill_col)
-	}
-	rl.DrawRectangleLines(x, y, w, h, ACCENT_COLOR)
-}
-
-draw_bg :: proc(tex: rl.Texture2D, tint: rl.Color) {
-	if tex.id > 0 {
-		rl.DrawTexturePro(
-			tex,
-			{0, 0, f32(tex.width), f32(tex.height)},
-			{0, 0, swf(), shf()},
-			{0, 0}, 0, tint)
-	} else {
-		rl.ClearBackground(DARK_BG)
-	}
-}
-
-draw_sprite_frame :: proc(tex: rl.Texture2D, frame_w, frame_h: i32, frame_idx: int,
-                          dst_x, dst_y, dst_w, dst_h: f32, flip: bool) {
-	if tex.id == 0 do return
-	cols := tex.width / frame_w
-	col  := i32(frame_idx) % cols
-	row  := i32(frame_idx) / cols
-	src  := rl.Rectangle{f32(col * frame_w), f32(row * frame_h), f32(frame_w), f32(frame_h)}
-	if flip do src.width = -src.width
-	rl.DrawTexturePro(tex, src, {dst_x, dst_y, dst_w, dst_h}, {0, 0}, 0, rl.WHITE)
-}
-
-draw_alignment_chip :: proc(g: ^GameState, x, y: i32) {
-	col := alignment_color(g.summoner.alignment)
-	rl.DrawRectangle(x, y, 110, 24, {col[0]/4, col[1]/4, col[2]/4, 200})
-	rl.DrawRectangleLines(x, y, 110, 24, {col[0], col[1], col[2], col[3]})
-	label := fmt.tprintf("%-7s %+d", alignment_name(g.summoner.alignment), g.summoner.alignment_pts)
-	draw_text(label, x+4, y+4, 16, {col[0], col[1], col[2], col[3]})
-}
-
-// ---- title screen ----
-
-draw_title :: proc() {
-	rl.ClearBackground(DARK_BG)
-	rl.DrawRectangleGradientV(0, 0, sw(), sh(), {5, 5, 20, 255}, {30, 10, 60, 255})
-	cx := sw() / 2
-	draw_text("SOULBINDER",            cx - 200, 160, 80, ACCENT_COLOR)
-	draw_text("v0.2 Demo",             cx - 60,  255, 28, TEXT_COLOR)
-	draw_text("Press ENTER to begin",  cx - 160, 360, 26, GOLD_COLOR)
-	draw_text("Bind spirits. Negotiate. Fuse. Become the vessel.",
-	                                   cx - 310, 410, 22, {150, 150, 180, 255})
-	draw_text("SMT-style negotiation + Pokemon-style evolution",
-	                                   cx - 290, 445, 20, {120, 120, 160, 255})
-	draw_text("[WASD/Arrows] Move  [E] Encounter  [F] Fuse  [B] Bind  [T] Talk",
-	                                   cx - 310, 490, 18, {90, 90, 120, 255})
-	draw_text("[Gamepad: A=Confirm  B=Back  X=Talk  Y=Bind  D-Pad=Navigate]",
-	                                   cx - 330, 515, 18, {90, 90, 120, 255})
-}
-
-// ---- overworld screen ----
-
-elem_color_ow :: proc(t: SpiritType) -> rl.Color {
-	c := spirit_type_color(t)
-	return {c[0], c[1], c[2], c[3]}
-}
-
-draw_spirit_glyph :: proc(cx, cy, size: i32, t: SpiritType, pulse: f32) {
-	ec  := elem_color_ow(t)
-	p   := math.sin(pulse)*0.5 + 0.5
-	r   := f32(size / 2)
-	dim := rl.Color{ec.r, ec.g, ec.b, 80}
-
-	rl.DrawCircleLines(cx, cy, r + 3 + f32(int(p*4)), dim)
-	rl.DrawCircleLines(cx, cy, r, ec)
-
+type_color :: proc(t: TechType) -> rl.Color {
 	switch t {
-	case .Fire:
-		for i in 0..<6 {
-			a := f32(i)*60*rl.DEG2RAD + pulse*0.5
-			rl.DrawLineEx(
-				{f32(cx)+math.cos(a)*r*0.3, f32(cy)+math.sin(a)*r*0.3},
-				{f32(cx)+math.cos(a)*r*0.9, f32(cy)+math.sin(a)*r*0.9},
-				2, ec)
-		}
-		rl.DrawCircle(cx, cy, r*0.2, ec)
-	case .Ice, .Water:
-		rl.DrawCircleLines(cx, cy, r*0.5, ec)
-		rl.DrawCircleLines(cx, cy, r*0.3, ec)
-	case .Earth:
-		rl.DrawRectangleLinesEx({f32(cx)-r/2, f32(cy)-r/2, r, r}, 2, ec)
-	case .Wind:
-		for i in 0..<8 {
-			a  := f32(i)*45*rl.DEG2RAD + pulse
-			a2 := a + 0.5
-			rl.DrawLineEx(
-				{f32(cx)+math.cos(a)*r*0.2,  f32(cy)+math.sin(a)*r*0.2},
-				{f32(cx)+math.cos(a2)*r*0.8, f32(cy)+math.sin(a2)*r*0.8},
-				1.5, ec)
-		}
-	case .Dark, .Alien:
-		for i in 0..<5 {
-			a  := f32(i)*72*rl.DEG2RAD - 90*rl.DEG2RAD + pulse*0.3
-			a2 := f32(i+2)*72*rl.DEG2RAD - 90*rl.DEG2RAD + pulse*0.3
-			rl.DrawLineEx(
-				{f32(cx)+math.cos(a)*r*0.8,  f32(cy)+math.sin(a)*r*0.8},
-				{f32(cx)+math.cos(a2)*r*0.8, f32(cy)+math.sin(a2)*r*0.8},
-				2, ec)
-		}
-	case .Light:
-		rl.DrawLineEx({f32(cx), f32(cy) - r*0.8}, {f32(cx), f32(cy) + r*0.8}, 2, ec)
-		rl.DrawLineEx({f32(cx) - r*0.8, f32(cy)}, {f32(cx) + r*0.8, f32(cy)}, 2, ec)
-		rl.DrawCircleLines(cx, cy, r*0.4, ec)
-	case .Nature:
-		for i in -1..=1 {
-			rl.DrawLineEx(
-				{f32(cx + i32(i)*10) - r*0.4, f32(cy) - r*0.7},
-				{f32(cx + i32(i)*10) + r*0.4, f32(cy) + r*0.7},
-				2, ec)
-		}
+	case .Fire:    return rl.Color{220, 90, 50, 255}
+	case .Water:   return rl.Color{70, 130, 220, 255}
+	case .Nature:  return rl.Color{80, 180, 90, 255}
+	case .Dark:    return rl.Color{110, 60, 150, 255}
+	case .Psychic: return rl.Color{210, 90, 200, 255}
+	case .Kinetic: return rl.Color{200, 175, 90, 255}
 	}
+	return rl.GRAY
 }
 
-draw_player_sprite_ow :: proc(px, py, frame: i32) {
-	col    := rl.Color{255, 220, 100, 255}
-	staff  := rl.Color{180, 160, 80, 255}
-	orb    := rl.Color{200, 80, 255, 255}
-	rl.DrawRectangle(px-5, py-14, 10, 14, col)
-	rl.DrawCircle(px, py-18, 6, col)
-	rl.DrawLineEx({f32(px-8), f32(py-24)}, {f32(px-8), f32(py+2)}, 2, staff)
-	rl.DrawCircle(px-8, py-26, 4, orb)
-	if frame == 0 {
-		rl.DrawRectangle(px-5, py,   4, 8, col)
-		rl.DrawRectangle(px+1, py,   4, 8, col)
+draw_bar :: proc(x, y, w, h: i32, current, maximum: int, fill, back: rl.Color) {
+	rl.DrawRectangle(x, y, w, h, back)
+	if maximum > 0 && current > 0 {
+		fw := i32(f32(w - 2) * f32(current) / f32(maximum))
+		rl.DrawRectangle(x + 1, y + 1, fw, h - 2, fill)
+	}
+	rl.DrawRectangleLines(x, y, w, h, COL_BORDER)
+}
+
+draw_monster_panel :: proc(mon: ^BattleMonster, x, y, w: i32) {
+	h: i32 = 70
+	rl.DrawRectangle(x, y, w, h, COL_PANEL)
+	rl.DrawRectangleLines(x, y, w, h, COL_BORDER)
+
+	draw_text_at(mon.name, x + 10, y + 6, 20, COL_TEXT)
+	tcol := type_color(mon.mon_type)
+	rl.DrawRectangle(x + w - 96, y + 8, 82, 18, tcol)
+	draw_text_at(type_name(mon.mon_type), x + w - 90, y + 10, 14, rl.BLACK)
+
+	draw_text_at("HP",   x + 10, y + 30, 14, COL_DIM)
+	draw_bar(x + 40, y + 30, w - 130, 14, mon.hp, mon.hp_max, COL_HP, COL_HP_BG)
+	draw_text_at(fmt.tprintf("%d/%d", mon.hp, mon.hp_max), x + w - 82, y + 30, 14, COL_TEXT)
+
+	draw_text_at("SOUL", x + 10, y + 49, 14, COL_DIM)
+	draw_bar(x + 40, y + 49, w - 130, 12, mon.soul, mon.soul_max, COL_SOUL, COL_SOUL_BG)
+	draw_text_at(fmt.tprintf("%d/%d", mon.soul, mon.soul_max), x + w - 82, y + 48, 14, COL_TEXT)
+}
+
+draw_monster_sprite :: proc(mon: ^BattleMonster, cx, cy, size: i32) {
+	x := cx - size / 2
+	y := cy - size / 2
+	if sheet, ok := get_monster_art(mon.name); ok {
+		t := f32(rl.GetTime())
+		src  := sheet_frame_rect(sheet, t, get_monster_art_fps(mon.name))
+		dest := rl.Rectangle{f32(x), f32(y), f32(size), f32(size)}
+		rl.DrawTexturePro(sheet.tex, src, dest, {0, 0}, 0, rl.WHITE)
+	} else if g_atlas.id != 0 && mon.spirit_id >= 0 && mon.spirit_id < len(SpiritID) {
+		src  := spirit_rects[SpiritID(mon.spirit_id)]
+		dest := rl.Rectangle{f32(x), f32(y), f32(size), f32(size)}
+		rl.DrawTexturePro(g_atlas, src, dest, {0, 0}, 0, rl.WHITE)
 	} else {
-		rl.DrawRectangle(px-5, py,   4, 10, col)
-		rl.DrawRectangle(px+1, py-2, 4, 10, col)
+		// Programmer art fallback
+		col := type_color(mon.mon_type)
+		rl.DrawRectangleRounded(rl.Rectangle{f32(x), f32(y), f32(size), f32(size)}, 0.2, 8, col)
+		rl.DrawRectangleRoundedLines(rl.Rectangle{f32(x), f32(y), f32(size), f32(size)}, 0.2, 8, rl.WHITE)
+		// Face
+		face_r := size / 3
+		rl.DrawCircle(cx, cy, f32(face_r), rl.Color{230, 200, 170, 255})
+		// Eyes
+		rl.DrawCircle(cx - face_r/3, cy - face_r/4, f32(face_r/5), rl.Color{30, 30, 30, 255})
+		rl.DrawCircle(cx + face_r/3, cy - face_r/4, f32(face_r/5), rl.Color{30, 30, 30, 255})
+		// Name label
+		tw := rl.MeasureText(_cs(mon.name), 16)
+		draw_text_at(mon.name, x + (size - tw)/2, y + size - 22, 16, rl.BLACK)
 	}
 }
 
-draw_overworld :: proc(g: ^GameState) {
-	COL_GRASS  :: rl.Color{20,  50, 25, 255}
-	COL_TREE   :: rl.Color{15,  35, 18, 255}
-	COL_PATH   :: rl.Color{70,  60, 45, 255}
-	COL_WATER  :: rl.Color{20,  50,100, 255}
-	COL_RUIN   :: rl.Color{55,  45, 70, 255}
-	COL_SPECIAL:: rl.Color{200,150,255, 255}
-	COL_BG_OW  :: rl.Color{12,   8, 20, 255}
+draw_button :: proc(x, y, w, h: i32, label: string, selected, enabled: bool, accent: rl.Color = COL_BORDER) {
+	bg := COL_PANEL_2 if selected else COL_PANEL
+	border := COL_HILITE if selected else accent
+	txt_col := COL_TEXT if enabled else COL_DIM
 
-	rl.ClearBackground(COL_BG_OW)
-
-	area := g.current_area
-	pulse := f32(f32(rl.GetTime()))
-
-	for ty in 0..<MAP_H {
-		for tx in 0..<MAP_W {
-			t  := AREA_MAPS[area][ty][tx]
-			sx := i32(tx*TILE_SZ) - i32(g.cam_x)
-			sy := i32(ty*TILE_SZ) - i32(g.cam_y)
-			if sx > sw() || sy > sh() || sx+TILE_SZ < 0 || sy+TILE_SZ < 0 do continue
-
-			col: rl.Color
-			switch t {
-			case 0: col = (area == .Ruins) ? COL_RUIN : COL_GRASS
-			case 1: col = (area == .Ruins) ? rl.Color{40,30,55,255} : COL_TREE
-			case 2: col = COL_PATH
-			case 3: col = COL_WATER
-			case 4: col = COL_SPECIAL
-			case:   col = COL_BG_OW
-			}
-			rl.DrawRectangle(sx, sy, TILE_SZ, TILE_SZ, col)
-			rl.DrawRectangleLinesEx({f32(sx), f32(sy), TILE_SZ, TILE_SZ}, 1, {0,0,0,40})
-
-			if t == 4 {
-				glow := f32(math.abs(math.sin(pulse*2)))
-				rl.DrawRectangle(sx, sy, TILE_SZ, TILE_SZ,
-					{COL_SPECIAL.r, COL_SPECIAL.g, COL_SPECIAL.b, u8(glow*80)})
-				if g.boss_defeated[area] {
-					rl.DrawText("+", sx+TILE_SZ/2-4, sy+TILE_SZ/2-6, 12, {255,240,100,255})
-				}
-			}
-		}
+	rl.DrawRectangle(x, y, w, h, bg)
+	rl.DrawRectangleLines(x, y, w, h, border)
+	if selected {
+		rl.DrawRectangleLines(x + 1, y + 1, w - 2, h - 2, border)
 	}
 
-	// player
-	px := i32(g.player_tx*TILE_SZ) - i32(g.cam_x) + TILE_SZ/2
-	py := i32(g.player_ty*TILE_SZ) - i32(g.cam_y) + TILE_SZ - 6
-	draw_player_sprite_ow(px, py, i32(g.anim_frame))
-
-	// active spirits as small glyphs around player (up to 3 visible)
-	count := 0
-	for i in 0..<6 {
-		s := g.summoner.spirits[i]
-		if s == nil || !s.active do continue
-		if count >= 3 do break
-		ox := i32(count-1) * 28
-		draw_spirit_glyph(px+ox, py-40, 18, s.element, f32(pulse)+f32(count))
-		count += 1
-	}
-
-	// HUD — top left
-	draw_panel(4, 4, 240, 58, PANEL_COLOR)
-	draw_text(AREA_NAMES[area], 12, 8, 10, {120, 100, 160, 255})
-	draw_text("HP", 12, 22, 10, TEXT_COLOR)
-	draw_bar(32, 22, 150, 10, g.summoner.hp, g.summoner.max_hp, {80, 220, 120, 255})
-	draw_text(fmt.tprintf("%d/%d", g.summoner.hp, g.summoner.max_hp), 188, 22, 9, {120,100,160,255})
-	draw_text(fmt.tprintf("Lv.%d  Gold:%d  Spirits:%d/6",
-		g.summoner.level, g.summoner.gold, filled_slots(g)), 12, 38, 9, {120,100,160,255})
-
-	// area boss status — top right
-	for area_i in Area {
-		i := int(area_i)
-		if g.boss_defeated[area_i] {
-			names := [Area]string{.Village="Specter", .Forest="Thornlord", .Ruins="Revenant"}
-			draw_text(fmt.tprintf("[%s SEALED]", names[area_i]),
-				sw()-140, i32(sh()-18-i32(i)*13), 8, ACCENT_COLOR)
-		}
-	}
-
-	// message bar
-	if g.overworld_msg != "" {
-		tw := rl.MeasureText(cstr(g.overworld_msg), 14)
-		bw := tw + 24
-		bx := (sw() - bw) / 2
-		draw_panel(bx, sh()-50, bw, 36, PANEL_COLOR)
-		draw_text(g.overworld_msg, bx+12, sh()-42, 14, TEXT_COLOR)
-	}
-
-	// controls hint
-	draw_text("[WASD/Arrows] Move   [F] Fuse spirits", 4, sh()-14, 9, {80,70,110,255})
+	cstr := _cs(label)
+	tw := rl.MeasureText(cstr, 20)
+	rl.DrawText(cstr, x + (w - tw)/2, y + (h - 20)/2, 20, txt_col)
 }
 
-// ---- combat enemy creature ----
-
-draw_combat_enemy :: proc(cx, cy: i32, g: ^GameState) {
-	t    := g.enemy.spirit_template.element
-	ec   := elem_color_ow(t)
-	dim  := rl.Color{ec.r/3, ec.g/3, ec.b/3, 180}
-	pulse := f32(rl.GetTime())
-	hp_pct := f32(g.enemy.hp) / f32(g.enemy.max_hp)
-
-	// hit flash — white tint when player just attacked
-	base_col := ec
-	if g.player_attack_timer > 0.55 {
-		flash := u8((g.player_attack_timer - 0.55) / 0.15 * 255)
-		base_col = {255, 255, 255, flash}
-	}
-
-	// shadow
-	rl.DrawEllipse(cx, cy+70, 50, 12, {0,0,0,80})
-
-	switch t {
-	case .Fire:
-		// flame body: stacked ovals + fire crown
-		rl.DrawEllipse(cx, cy+20, 28, 42, dim)
-		rl.DrawEllipse(cx, cy+20, 24, 38, base_col)
-		for i in 0..<5 {
-			a := f32(i)*72*rl.DEG2RAD + pulse*2
-			fx := cx + i32(math.cos(a)*20)
-			fy := cy - 20 + i32(math.sin(a)*10)
-			rl.DrawCircle(fx, fy, 7+math.sin(pulse*3+f32(i))*3, {255,180,40,200})
-		}
-		rl.DrawCircle(cx-10, cy+10, 6, {20,20,20,255}) // left eye
-		rl.DrawCircle(cx+10, cy+10, 6, {20,20,20,255}) // right eye
-		rl.DrawCircle(cx-10, cy+10, 3, {255,80,0,255})
-		rl.DrawCircle(cx+10, cy+10, 3, {255,80,0,255})
-
-	case .Ice, .Water:
-		// crystalline body
-		rl.DrawPoly({f32(cx), f32(cy)}, 6, 50, pulse*10, dim)
-		rl.DrawPoly({f32(cx), f32(cy)}, 6, 44, pulse*10, base_col)
-		rl.DrawPolyLines({f32(cx), f32(cy)}, 6, 52, pulse*10, {255,255,255,120})
-		// inner crystal shards
-		for i in 0..<3 {
-			a := f32(i)*120*rl.DEG2RAD + pulse*0.5
-			rl.DrawLineEx(
-				{f32(cx), f32(cy)},
-				{f32(cx)+math.cos(a)*40, f32(cy)+math.sin(a)*40},
-				3, {255,255,255,180})
-		}
-		rl.DrawCircle(cx, cy, 10, {220,240,255,255}) // core
-
-	case .Earth, .Nature:
-		// rocky turtle-like body
-		rl.DrawEllipse(cx, cy+10, 45, 35, dim)
-		rl.DrawEllipse(cx, cy+10, 40, 30, base_col)
-		// shell plates
-		for i in 0..<6 {
-			a := f32(i)*60*rl.DEG2RAD
-			px2 := cx + i32(math.cos(a)*22)
-			py2 := cy+10 + i32(math.sin(a)*14)
-			rl.DrawCircle(px2, py2, 8, dim)
-			rl.DrawCircleLines(px2, py2, 8, {255,255,255,60})
-		}
-		// head
-		rl.DrawCircle(cx, cy-32, 18, base_col)
-		rl.DrawCircle(cx-6, cy-36, 4, {20,20,20,255})
-		rl.DrawCircle(cx+6, cy-36, 4, {20,20,20,255})
-		// arms
-		rl.DrawEllipse(cx-52, cy+5, 12, 8, base_col)
-		rl.DrawEllipse(cx+52, cy+5, 12, 8, base_col)
-
-	case .Wind:
-		// wispy serpent
-		for i in 0..<8 {
-			fi := f32(i)
-			sx := cx + i32(math.sin(pulse+fi*0.8)*30)
-			sy := cy - 40 + i32(fi*14)
-			r  := f32(18 - i)
-			if r < 4 do r = 4
-			rl.DrawCircle(sx, sy, r, {base_col.r, base_col.g, base_col.b, u8(200 - i*20)})
-		}
-		// eyes on head segment
-		rl.DrawCircle(cx + i32(math.sin(pulse)*30) - 6, cy-38, 4, {20,20,20,255})
-		rl.DrawCircle(cx + i32(math.sin(pulse)*30) + 6, cy-38, 4, {20,20,20,255})
-
-	case .Dark, .Alien:
-		// shadowy wraith
-		rl.DrawCircle(cx, cy-10, 40, dim)
-		// tentacles
-		for i in 0..<6 {
-			a  := f32(i)*60*rl.DEG2RAD + pulse*0.4
-			tx2 := cx + i32(math.cos(a)*(50+math.sin(pulse*2+f32(i))*15))
-			ty2 := cy+30 + i32(math.sin(a)*(30+math.cos(pulse*2+f32(i))*10))
-			rl.DrawLineEx({f32(cx), f32(cy+10)}, {f32(tx2), f32(ty2)}, 4, base_col)
-			rl.DrawCircle(tx2, ty2, 6, base_col)
-		}
-		// glowing eyes
-		rl.DrawCircle(cx-14, cy-16, 8, {255,255,255,220})
-		rl.DrawCircle(cx+14, cy-16, 8, {255,255,255,220})
-		rl.DrawCircle(cx-14, cy-16, 4, base_col)
-		rl.DrawCircle(cx+14, cy-16, 4, base_col)
-
-	case .Light:
-		// angelic form — robes + halo
-		rl.DrawEllipse(cx, cy+20, 26, 44, dim)
-		rl.DrawEllipse(cx, cy+20, 22, 40, base_col)
-		// halo
-		rl.DrawRing({f32(cx), f32(cy-48)}, 22, 28, 0, 360, 32, {ec.r, ec.g, ec.b, 180})
-		// wings
-		rl.DrawEllipse(cx-50, cy, 28, 16, {base_col.r, base_col.g, base_col.b, 160})
-		rl.DrawEllipse(cx+50, cy, 28, 16, {base_col.r, base_col.g, base_col.b, 160})
-		// face
-		rl.DrawCircle(cx, cy-14, 16, base_col)
-		rl.DrawCircle(cx-5, cy-17, 3, {20,20,20,255})
-		rl.DrawCircle(cx+5, cy-17, 3, {20,20,20,255})
-	}
-
-	// HP bar under creature
-	bar_w := i32(120)
-	bar_x := cx - bar_w/2
-	bar_y := cy + 80
-	rl.DrawRectangle(bar_x, bar_y, bar_w, 8, {40,40,40,200})
-	fill_col := rl.Color{80,220,80,255}
-	if hp_pct < 0.5 do fill_col = {220,180,40,255}
-	if hp_pct < 0.25 do fill_col = {220,60,60,255}
-	rl.DrawRectangle(bar_x, bar_y, i32(f32(bar_w)*hp_pct), 8, fill_col)
-	rl.DrawRectangleLines(bar_x, bar_y, bar_w, 8, ec)
-
-	// name tag
-	name_cs := cstr(g.enemy.name)
-	tw := rl.MeasureText(name_cs, 14)
-	rl.DrawText(name_cs, cx - tw/2, bar_y + 12, 14, ec)
+draw_log_box :: proc(x, y, w, h: i32) {
+	rl.DrawRectangle(x, y, w, h, COL_PANEL)
+	rl.DrawRectangleLines(x, y, w, h, COL_BORDER)
+	draw_wrapped_text(get_log(), x + 14, y + h/2 - 14, w - 28, 20)
 }
 
-// ---- combat screen ----
+draw_action_menu :: proc(x, y, w, h: i32) {
+	n := action_count()
+	bw := (w - 20 - i32(n - 1)*10) / i32(n)
+	for i in 0 ..< n {
+		bx := x + 10 + i32(i) * (bw + 10)
+		lbl := action_label(i)
+		accent := COL_BIND if lbl == "BIND" else COL_BORDER
+		// Flash green if bind is newly available
+		if lbl == "BIND" && g_battle.can_bind {
+			t := f32(rl.GetTime())
+			flash := u8(160 + int(math.sin(t * 6.0) * 80.0))
+			accent = rl.Color{80, flash, 100, 255}
+		}
+		draw_button(bx, y + 10, bw, h - 30, lbl, g_battle.action_cursor == i, true, accent)
+	}
+	draw_text_at("←→ select   Z/Enter confirm", x + 12, y + h - 20, 14, COL_DIM)
+}
 
-draw_combat :: proc(g: ^GameState) {
-	// background
-	bg_idx := g.run_step % 3
-	draw_bg(bg_rooms[bg_idx], {160, 160, 180, 255})
-	rl.DrawRectangle(0, 0, sw(), sh(), {8, 8, 20, 170})
+draw_move_menu :: proc(x, y, w, h: i32) {
+	fighter  := active_fighter()
+	unlocked := active_moves_unlocked()
+	bw := (w - 30) / 2
+	bh := (h - 30) / 2
+	for i in 0 ..< MOVE_SLOTS {
+		row := i / 2
+		col := i % 2
+		bx := x + 10 + i32(col) * (bw + 10)
+		by := y + 10 + i32(row) * (bh + 10)
 
-	pulse := f32(rl.GetTime())
-	bob   := math.sin(pulse*2) * 6
+		tid  := fighter.moves[i]
+		tech := get_technique_def(tid)
+		selected := g_battle.move_cursor == i
+		locked   := i >= unlocked
 
-	// player sprite — idle or attack animation
-	py_sprite := f32(sh()) - 240
-	if g.player_attack_timer > 0 {
-		atk_frames := 8
-		t          := 0.7 - g.player_attack_timer          // elapsed
-		frame      := int(t / 0.7 * f32(atk_frames)) % atk_frames
-		draw_sprite_frame(player_atk, 48, 48, frame, 60, py_sprite, 144, 144, false)
+		if tech == nil || locked {
+			label := "---" if tech == nil else fmt.tprintf("Lv%d needed", taz_move_unlocks[i].level)
+			draw_button(bx, by, bw, bh, label, selected, false)
+			continue
+		}
+		can_afford := fighter.soul >= tech.soul_cost
+		bg     := COL_PANEL_2 if selected else COL_PANEL
+		border := COL_HILITE  if selected else COL_BORDER
+		rl.DrawRectangle(bx, by, bw, bh, bg)
+		rl.DrawRectangleLines(bx, by, bw, bh, border)
+
+		txt_col := COL_TEXT if can_afford else COL_DIM
+		draw_text_at(tech.name, bx + 12, by + 8, 18, txt_col)
+
+		tcol := type_color(tech.tech_type)
+		rl.DrawRectangle(bx + 12, by + bh - 30, 64, 16, tcol)
+		draw_text_at(type_name(tech.tech_type), bx + 16, by + bh - 28, 12, rl.BLACK)
+
+		info := fmt.tprintf("PWR %d  SOUL %d", tech.power, tech.soul_cost)
+		draw_text_at(info, bx + bw - 160, by + bh - 28, 14, txt_col)
+	}
+	draw_text_at("Z/Enter use   X/Esc back", x + 12, y + h - 20, 14, COL_DIM)
+}
+
+draw_spirit_menu :: proc(x, y, w, h: i32) {
+	rl.DrawRectangle(x, y, w, h, COL_PANEL)
+	rl.DrawRectangleLines(x, y, w, h, COL_BORDER)
+	draw_text_at("Choose Spirit", x + 12, y + 8, 18, COL_HILITE)
+
+	row_h : i32 = 34
+	for i in 0 ..< g_prog.bound_count {
+		def := get_monster_def(g_prog.bound_spirits[i])
+		if def == nil do continue
+		iy       := y + 34 + i32(i) * row_h
+		selected := g_battle.spirit_cursor == i
+		fainted  := spirit_is_fainted(i)
+		if selected {
+			rl.DrawRectangle(x + 6, iy - 2, w - 12, row_h, COL_PANEL_2)
+		}
+		col := COL_DIM if fainted else (COL_HILITE if selected else COL_TEXT)
+		lv_str := fmt.tprintf("Lv%d", g_prog.spirit_levels[i])
+		draw_text_at(fmt.tprintf("%s  %s", def.name, lv_str), x + 16, iy + 6, 17, col)
+
+		// Type badge
+		tcol := type_color(def.mon_type)
+		tw   := rl.MeasureText(_cs(type_name(def.mon_type)), 12)
+		rl.DrawRectangle(x + 160, iy + 8, tw + 8, 14, tcol)
+		draw_text_at(type_name(def.mon_type), x + 164, iy + 9, 12, rl.BLACK)
+
+		// HP bar or FAINTED tag
+		if fainted {
+			draw_text_at("FAINTED", x + w - 90, iy + 6, 14, COL_HP)
+		} else {
+			hp_max := spirit_hp_max_at(i)
+			hp_cur := g_prog.spirit_hp_cur[i]
+			if hp_cur < 0 do hp_cur = hp_max
+			draw_bar(x + w - 114, iy + 8, 100, 12, hp_cur, hp_max, COL_HP, COL_HP_BG)
+		}
+	}
+	if g_prog.bound_count == 0 {
+		draw_text_at("No spirits bound yet.", x + 16, y + 34, 16, COL_DIM)
+	}
+	draw_text_at("Up/Down: select   Z/Enter: summon   X/Esc: back", x + 12, y + h - 20, 14, COL_DIM)
+}
+
+// ── Procedural item icons ─────────────────────────────────────────────────
+// Items have no spritesheet art of their own, so each one gets a small
+// distinct silhouette + color keyed off what it actually does: a vial for
+// HP-only restoratives, a faceted shard for soul-only ones, a vial-with-
+// gem for items that do both, and a radiant starburst for full restores.
+
+draw_vial_icon :: proc(cx, cy, size: i32, fill: rl.Color) {
+	w := f32(size) * 0.5
+	h := f32(size) * 0.62
+	x := f32(cx) - w/2
+	y := f32(cy) - h/2 + f32(size)*0.05
+
+	neck_w := w * 0.34
+	neck_h := f32(size) * 0.16
+	rl.DrawRectangle(i32(f32(cx) - neck_w/2), i32(y - neck_h), i32(neck_w), i32(neck_h)+2, rl.Color{205, 200, 220, 255})
+	rl.DrawRectangle(i32(f32(cx) - neck_w/2 - 2), i32(y - neck_h - 4), i32(neck_w)+4, 4, rl.Color{120, 110, 90, 255})
+
+	body := rl.Rectangle{x, y, w, h}
+	rl.DrawRectangleRounded(body, 0.45, 6, rl.Color{235, 230, 245, 235})
+	fill_h := h * 0.58
+	rl.DrawRectangleRounded(rl.Rectangle{x + 3, y + (h - fill_h), w - 6, fill_h - 3}, 0.4, 6, fill)
+	rl.DrawRectangleRoundedLines(body, 0.45, 6, rl.Color{40, 36, 56, 255})
+	// Glass highlight
+	rl.DrawLineEx(rl.Vector2{x + w*0.28, y + h*0.18}, rl.Vector2{x + w*0.28, y + h*0.82}, 2, rl.Color{255, 255, 255, 90})
+}
+
+draw_shard_icon :: proc(cx, cy, size: i32, fill: rl.Color) {
+	r := f32(size) * 0.42
+	top    := rl.Vector2{f32(cx), f32(cy) - r}
+	right  := rl.Vector2{f32(cx) + r*0.7, f32(cy) - r*0.05}
+	bottom := rl.Vector2{f32(cx), f32(cy) + r}
+	left   := rl.Vector2{f32(cx) - r*0.7, f32(cy) - r*0.05}
+	dim    := rl.Color{fill.r/2, fill.g/2, fill.b/2, fill.a}
+	rl.DrawTriangle(left, top, right, fill)
+	rl.DrawTriangle(left, right, bottom, dim)
+	rl.DrawLineEx(top, bottom, 1.5, rl.Color{255, 255, 255, 130})
+	rl.DrawTriangleLines(left, top, right, rl.Color{20, 24, 40, 255})
+	rl.DrawTriangleLines(left, right, bottom, rl.Color{20, 24, 40, 255})
+}
+
+draw_starburst_icon :: proc(cx, cy, size: i32) {
+	r := f32(size) * 0.46
+	for i in 0 ..< 8 {
+		ang  := f32(i) * (f32(math.TAU) / 8)
+		tip  := rl.Vector2{f32(cx) + math.cos(ang) * r, f32(cy) + math.sin(ang) * r}
+		spread : f32 = f32(math.TAU) / 22
+		base1 := rl.Vector2{f32(cx) + math.cos(ang+spread) * r * 0.32, f32(cy) + math.sin(ang+spread) * r * 0.32}
+		base2 := rl.Vector2{f32(cx) + math.cos(ang-spread) * r * 0.32, f32(cy) + math.sin(ang-spread) * r * 0.32}
+		col := rl.Color{255, 215, 110, 255} if i % 2 == 0 else rl.Color{255, 245, 215, 255}
+		rl.DrawTriangle(base1, tip, base2, col)
+	}
+	rl.DrawCircle(cx, cy, r * 0.3, rl.Color{255, 250, 220, 255})
+	rl.DrawCircleLines(cx, cy, r * 0.3, rl.Color{200, 150, 60, 255})
+}
+
+draw_item_icon :: proc(item: ^ItemDef, cx, cy, size: i32) {
+	full_restore := item.heal_hp >= 900 && item.restore_souls >= 900
+	has_hp   := item.heal_hp > 0
+	has_soul := item.restore_souls > 0
+
+	switch {
+	case full_restore:
+		draw_starburst_icon(cx, cy, size)
+	case has_hp && has_soul:
+		draw_vial_icon(cx, cy, size, rl.Color{220, 80, 95, 255})
+		rl.DrawCircle(cx, cy + i32(f32(size)*0.12), f32(size)*0.15, rl.Color{90, 165, 255, 235})
+		rl.DrawCircleLines(cx, cy + i32(f32(size)*0.12), f32(size)*0.15, rl.Color{30, 60, 110, 255})
+	case has_soul:
+		draw_shard_icon(cx, cy, size, COL_SOUL)
+	case:
+		draw_vial_icon(cx, cy, size, rl.Color{220, 70, 80, 255})
+	}
+}
+
+draw_item_menu :: proc(x, y, w, h: i32) {
+	rl.DrawRectangle(x, y, w, h, COL_PANEL)
+	rl.DrawRectangleLines(x, y, w, h, COL_BORDER)
+
+	row_h: i32 = 28
+	slot := 0
+	yy := y + 10
+	for id := 1; id <= MAX_ITEM_TYPES; id += 1 {
+		qty := g_battle.item_qty[id - 1]
+		if qty <= 0 do continue
+		item := get_item_def(id)
+		if item == nil do continue
+
+		selected := g_battle.item_cursor == slot
+		if selected {
+			rl.DrawRectangle(x + 6, yy - 2, w - 12, row_h, COL_PANEL_2)
+		}
+		col := COL_TEXT if selected else COL_DIM
+		draw_item_icon(item, x + 34, yy + row_h/2 - 2, 26)
+		draw_text_at(fmt.tprintf("%s  x%d", item.name, qty), x + 56, yy, 18, col)
+		draw_text_at(item.description, x + w/2, yy + 2, 13, COL_DIM)
+		slot += 1
+		yy += row_h
+	}
+	if slot == 0 {
+		draw_text_at("Bag is empty.", x + 16, y + 14, 18, COL_DIM)
+	}
+	draw_text_at("Z/Enter use   X/Esc back", x + 12, y + h - 20, 14, COL_DIM)
+}
+
+draw_message_prompt :: proc(x, y, w, h: i32) {
+	rl.DrawRectangle(x, y, w, h, COL_PANEL)
+	rl.DrawRectangleLines(x, y, w, h, COL_BORDER)
+	draw_text_at("Press Z / Enter to continue...", x + w - 280, y + h - 20, 14, COL_DIM)
+}
+
+draw_result_screen :: proc(title: string, subtitle: string, color: rl.Color) {
+	rl.DrawRectangle(0, 0, SCREEN_W, SCREEN_H, rl.Color{0, 0, 0, 180})
+	tw := rl.MeasureText(_cs(title), 52)
+	draw_text_at(title, (SCREEN_W - tw)/2, SCREEN_H/2 - 60, 52, color)
+	sw := rl.MeasureText(_cs(subtitle), 20)
+	draw_text_at(subtitle, (SCREEN_W - sw)/2, SCREEN_H/2 + 10, 20, COL_TEXT)
+
+	// XP earned
+	xp_str := fmt.tprintf("+%d XP", g_battle.xp_earned)
+	xw := rl.MeasureText(_cs(xp_str), 22)
+	draw_text_at(xp_str, (SCREEN_W - xw)/2, SCREEN_H/2 + 40, 22, rl.Color{100, 255, 130, 255})
+
+	hint := "Press Z / Enter to continue"
+	hw := rl.MeasureText(_cs(hint), 16)
+	draw_text_at(hint, (SCREEN_W - hw)/2, SCREEN_H/2 + 76, 16, COL_DIM)
+}
+
+draw_bind_flash :: proc() {
+	if g_battle.bind_flash <= 0 do return
+	alpha := u8(min(255, int(g_battle.bind_flash * 200.0)))
+	rl.DrawRectangle(0, 0, SCREEN_W, SCREEN_H, rl.Color{80, 230, 140, alpha / 3})
+
+	t := fmt.tprintf("SPIRIT BOUND!")
+	tw := rl.MeasureText(_cs(t), 52)
+	draw_text_at(t, (SCREEN_W - tw)/2, SCREEN_H/2 - 30, 52, rl.Color{80, 230, 140, alpha})
+}
+
+draw_battle :: proc() {
+	// Field background — big sky/floor split
+	rl.DrawRectangle(0, 0, SCREEN_W, 380, rl.Color{22, 16, 36, 255})
+	// Ground gradient
+	rl.DrawRectangle(0, 300, SCREEN_W, 80, rl.Color{40, 30, 60, 255})
+	rl.DrawRectangle(0, 296, SCREEN_W, 6, rl.Color{80, 60, 100, 255})
+
+	// Elemental tint in background (reflect the enemy's nature)
+	tcol := type_color(g_battle.enemy.mon_type)
+	rl.DrawRectangle(0, 0, SCREEN_W, 300, rl.Color{tcol.r/5, tcol.g/5, tcol.b/5, 255})
+
+	// Enemy (top-right area) — bigger sprite
+	draw_monster_sprite(&g_battle.enemy, 860, 170, 240)
+	draw_monster_panel(&g_battle.enemy, 20, 20, 440)
+
+	// Bind indicator on enemy
+	if g_battle.can_bind && !g_battle.already_bound {
+		t := f32(rl.GetTime())
+		flash := u8(180 + int(math.sin(t * 6.0) * 70.0))
+		rl.DrawCircle(860, 80, 20, rl.Color{80, 230, 140, flash})
+		bw := rl.MeasureText("BIND!", 16)
+		draw_text_at("BIND!", 860 - bw/2, 68, 16, rl.Color{30, 30, 30, 255})
+	}
+
+	// Active fighter (bottom-left) — spirit companion or Taz himself
+	if g_battle.active_is_spirit {
+		draw_monster_sprite(&g_battle.spirit_fighter, 280, 280, 160)
+		draw_monster_panel(&g_battle.spirit_fighter, 560, 300, 440)
+		// Small Taz standing behind his spirit
+		draw_taz_world(60, 310, 1, 0)
+		draw_text_at("TAZ", 44, 340, 12, COL_DIM)
 	} else {
-		draw_sprite_frame(player_idle, 48, 48, g.combat_idle_frame, 60, py_sprite, 144, 144, false)
+		draw_battle_taz(280, 280)
+		draw_monster_panel(&g_battle.player, 560, 300, 440)
 	}
 
-	// enemy — always programmer art creature
-	ecx := sw() - 240
-	ecy := i32(f32(sh())/2 - 80 + bob)
-	draw_combat_enemy(ecx, ecy, g)
-
-	// enemy panel
-	draw_panel(20, 20, 580, 150, PANEL_COLOR)
-	col4 := spirit_type_color(g.enemy.spirit_template.element)
-	rl.DrawRectangleLines(20, 20, 580, 150, {col4[0], col4[1], col4[2], col4[3]})
-	draw_text(g.enemy.name, 30, 28, 30, WARN_COLOR)
-	draw_text(fmt.tprintf("Lv.%d   ATK:%d   DEF:%d   SPD:%d   %v",
-		g.enemy.level, g.enemy.atk, g.enemy.def, g.enemy.spd,
-		g.enemy.spirit_template.element),
-		30, 64, 18, TEXT_COLOR)
-	draw_bar(30, 92, 540, 22, g.enemy.hp, g.enemy.max_hp, {220, 60, 60, 255})
-	draw_text(fmt.tprintf("HP: %d / %d", g.enemy.hp, g.enemy.max_hp), 30, 120, 18, TEXT_COLOR)
-	if g.enemy_enraged {
-		draw_text("ENRAGED!", 500, 28, 20, WARN_COLOR)
+	// HP warning glow on player
+	if g_battle.player.hp * 4 < g_battle.player.hp_max {
+		t := f32(rl.GetTime())
+		pulse := u8(80 + int(math.sin(t * 5.0) * 60.0))
+		rl.DrawRectangle(0, 290, SCREEN_W, 10, rl.Color{200, 40, 40, pulse})
 	}
 
-	// bind / talk badges
-	badge_y := i32(20)
-	if g.bind_available {
-		draw_panel(608, badge_y, 310, 36, {50, 20, 80, 255})
-		draw_text("** BIND READY — [B] **", 616, badge_y+8, 20, BIND_COLOR)
-		badge_y += 42
-	}
-	if g.talk_available && !g.negotiate_done {
-		draw_panel(608, badge_y, 310, 36, {20, 60, 50, 255})
-		draw_text("** TALK OPEN — [T] **", 616, badge_y+8, 20, TALK_COLOR)
-		badge_y += 42
-	}
-	// press-turn bonus flash
-	if g.bonus_action && !g.bonus_action_used {
-		draw_panel(608, badge_y, 310, 36, {80, 80, 0, 255})
-		draw_text("WEAKNESS! EXTRA ACTION!", 616, badge_y+8, 20, WEAK_COLOR)
-		badge_y += 42
-	}
+	// Bottom UI panel
+	panel_y: i32 = 386
+	log_h: i32 = 64
+	draw_log_box(10, panel_y, SCREEN_W - 20, log_h)
 
-	// summoner panel
-	draw_panel(608, 100, 654, 72, PANEL_COLOR)
-	draw_text(fmt.tprintf("Summoner  Lv.%d", g.summoner.level), 618, 106, 22, ACCENT_COLOR)
-	draw_bar(618, 130, 620, 20, g.summoner.hp, g.summoner.max_hp, {60, 200, 60, 255})
-	draw_text(fmt.tprintf("HP: %d / %d", g.summoner.hp, g.summoner.max_hp), 618, 154, 16, TEXT_COLOR)
-	draw_alignment_chip(g, 1118, 106)
+	action_y := panel_y + log_h + 8
+	action_h := SCREEN_H - action_y - 10
 
-	// skill menu
-	draw_panel(20, 182, 580, 320, PANEL_COLOR)
-	draw_text("SKILLS  (1-6 or arrow+ENTER)", 30, 190, 17, ACCENT_COLOR)
-	for i in 0..<6 {
-		s  := g.summoner.spirits[i]
-		sy := i32(214 + i * 46)
-		if s != nil && s.active {
-			col := spirit_type_color(s.element)
-			bg  := rl.Color{col[0]/6, col[1]/6, col[2]/6, 200}
-			brd := rl.Color{col[0], col[1], col[2], col[3]}
-			if i == g.selected_skill_idx {
-				bg  = {60, 80, 120, 255}
-				brd = GOLD_COLOR
-			}
-			rl.DrawRectangle(28, sy, 562, 42, bg)
-			rl.DrawRectangleLines(28, sy, 562, 42, brd)
-			cd_str := ""
-			if s.cooldown > 0 do cd_str = fmt.tprintf(" [CD:%d]", s.cooldown)
-			// show type weakness/resist vs enemy
-			aff := g.enemy.spirit_template.affinity[s.element]
-			eff := affinity_tag(aff)
-			draw_text(fmt.tprintf("%d. %s — %s  (%s)%s%s",
-				i+1, s.name, skill_name(s.skill), skill_description(s.skill), cd_str, eff),
-				36, sy+6, 15, TEXT_COLOR)
-			spd_str := fmt.tprintf("SPD:%d", spirit_spd(s))
-			draw_text(spd_str, 548, sy+6, 13, {130, 130, 160, 255})
-		} else {
-			rl.DrawRectangle(28, sy, 562, 42, {25, 25, 40, 180})
-			rl.DrawRectangleLines(28, sy, 562, 42, {50, 50, 70, 255})
-			draw_text(fmt.tprintf("%d. [empty slot]", i+1), 36, sy+14, 16, {70, 70, 90, 255})
+	switch g_battle.phase {
+	case .Choose_Action:
+		draw_action_menu(10, action_y, SCREEN_W - 20, action_h)
+	case .Choose_Move:
+		draw_move_menu(10, action_y, SCREEN_W - 20, action_h)
+	case .Choose_Item:
+		draw_item_menu(10, action_y, SCREEN_W - 20, action_h)
+	case .Choose_Spirit:
+		draw_spirit_menu(10, action_y, SCREEN_W - 20, action_h)
+	case .Show_Message, .Enemy_Turn, .Bind_Attempt:
+		draw_message_prompt(10, action_y, SCREEN_W - 20, action_h)
+	case .Bind_Success:
+		draw_message_prompt(10, action_y, SCREEN_W - 20, action_h)
+		draw_bind_flash()
+	case .Victory:
+		draw_action_menu(10, action_y, SCREEN_W - 20, action_h)
+		drop_line := ""
+		if g_battle.item_drop_id > 0 {
+			idef := get_item_def(g_battle.item_drop_id)
+			if idef != nil do drop_line = fmt.tprintf("  Dropped: %s!", idef.name)
 		}
+		draw_result_screen("VICTORY!",
+			fmt.tprintf("%s defeated!%s", g_battle.enemy.name, drop_line),
+			rl.Color{255, 215, 90, 255})
+	case .Defeat:
+		draw_action_menu(10, action_y, SCREEN_W - 20, action_h)
+		draw_result_screen("DEFEATED...", fmt.tprintf("%s has fainted!", g_battle.player.name), rl.Color{220, 80, 90, 255})
+		draw_text_at("You'll be returned to the Oracle Shrine.", SCREEN_W/2 - 190, SCREEN_H/2 + 100, 16, COL_DIM)
+	case .Fled:
+		draw_action_menu(10, action_y, SCREEN_W - 20, action_h)
+		draw_result_screen("GOT AWAY", "You fled the encounter.", rl.Color{160, 200, 255, 255})
 	}
 
-	// combat log
-	draw_panel(608, 182, 654, 320, PANEL_COLOR)
-	draw_text("COMBAT LOG", 618, 190, 17, ACCENT_COLOR)
-	for line, i in g.combat_log.lines {
-		col := TEXT_COLOR
-		if i == len(g.combat_log.lines) - 1 do col = {240, 240, 160, 255}
-		draw_text(line, 618, i32(214 + i * 40), 14, col)
+	// Bind flash overlay (always drawn on top)
+	draw_bind_flash()
+
+	// HUD — level, spirit count, active spirit indicator
+	spirit_tag := ""
+	if g_battle.active_is_spirit {
+		spirit_tag = fmt.tprintf("  ◆ %s", g_battle.spirit_fighter.name)
 	}
-
-	// particles & floating numbers
-	draw_effects(g)
-
-	// controls bar
-	draw_panel(20, sh()-56, sw()-40, 46, PANEL_COLOR)
-	draw_text("[1-6] Skill   [B] Bind   [T] Talk   [F] Flee   [↑↓] Navigate   [A/ENTER] Confirm",
-		30, sh()-44, 16, TEXT_COLOR)
-
-	// victory / defeat overlay
-	if g.combat_over {
-		rl.DrawRectangle(0, 0, sw(), sh(), {0, 0, 0, 160})
-		cx := sw() / 2
-		cy := sh() / 2
-		if g.combat_won {
-			if g.bind_success {
-				draw_text("SPIRIT BOUND!", cx - 160, cy - 50, 54, BIND_COLOR)
-			} else {
-				draw_text("VICTORY!", cx - 110, cy - 50, 54, GOLD_COLOR)
-			}
-		} else {
-			draw_text("DEFEATED...", cx - 140, cy - 50, 54, WARN_COLOR)
-		}
-		draw_text("Press ENTER to continue", cx - 170, cy + 30, 26, TEXT_COLOR)
-	}
+	hud := fmt.tprintf("Taz Lv%d  |  %d spirits%s", g_prog.level, g_prog.bound_count, spirit_tag)
+	hw := rl.MeasureText(_cs(hud), 15)
+	rl.DrawRectangle(SCREEN_W - hw - 20, 0, hw + 20, 24, rl.Color{0, 0, 0, 120})
+	draw_text_at(hud, SCREEN_W - hw - 8, 4, 15, COL_DIM)
 }
 
-// ---- negotiate screen ----
+// Programmer-art Taz in battle (larger, facing right toward enemy)
+draw_battle_taz :: proc(cx, cy: i32) {
+	scale := f32(1.0) + f32(g_prog.level - 1) * 0.04
+	bw := i32(f32(24) * scale)
+	bh := i32(f32(40) * scale)
+	hw := i32(f32(28) * scale)
 
-draw_negotiate :: proc(g: ^GameState) {
-	rl.ClearBackground(DARK_BG)
-	rl.DrawRectangleGradientV(0, 0, sw(), sh(), {10, 30, 30, 255}, {5, 15, 25, 255})
+	// Legs
+	rl.DrawRectangle(cx - bw/2, cy + bh/2, bw/3, i32(f32(16)*scale), rl.Color{40, 80, 160, 255})
+	rl.DrawRectangle(cx + bw/6, cy + bh/2, bw/3, i32(f32(16)*scale), rl.Color{40, 80, 160, 255})
 
-	// header
-	draw_panel(200, 80, 880, 70, {20, 50, 45, 255})
-	draw_text(fmt.tprintf("NEGOTIATION — %s", g.enemy.name), 220, 88, 28, TALK_COLOR)
-	col4 := alignment_color(g.enemy.talk_mood)
-	draw_text(fmt.tprintf("Mood: %s", alignment_name(g.enemy.talk_mood)),
-		750, 96, 20, {col4[0], col4[1], col4[2], 255})
+	// Body
+	rl.DrawRectangle(cx - bw/2, cy - bh/2, bw, bh, rl.Color{60, 120, 200, 255})
 
-	// enemy speech bubble
-	draw_panel(200, 170, 880, 60, {15, 40, 35, 255})
-	draw_text(fmt.tprintf("\"%s\"", enemy_talk_line(g.enemy.talk_mood)), 218, 186, 20, {180, 255, 220, 255})
+	// Arm reaching toward enemy
+	rl.DrawRectangle(cx + bw/2, cy - bh/4, i32(f32(20)*scale), bw/2, rl.Color{230, 200, 170, 255})
 
-	if !g.negotiate_done {
-		// options
-		option_labels := [NegotiateOption]string{
-			.Beg       = "Beg  (appeal to mercy — works on Chaos, low-level player)",
-			.Flatter   = "Flatter  (appeal to ego — works on Law spirits)",
-			.Threaten  = "Threaten  (works if you are Chaos aligned)",
-			.Offer_Gold = "---",
-		}
-		// build gold option dynamically
-		gold_cost := 50 * g.enemy.spirit_template.tier
+	// Head
+	rl.DrawCircle(cx, cy - bh/2 - hw/2, f32(hw), rl.Color{230, 200, 170, 255})
 
-		option_strs := [4]string{
-			"Beg  (appeal to mercy — works on Chaos, low-level player)",
-			"Flatter  (appeal to ego — works on Law spirits)",
-			"Threaten  (works if you are Chaos aligned)",
-			fmt.tprintf("Offer Gold  (cost: %d g | you have: %d g)", gold_cost, g.summoner.gold),
-		}
+	// Hair (spiky)
+	rl.DrawTriangle(
+		rl.Vector2{f32(cx - hw), f32(cy - bh/2 - hw)},
+		rl.Vector2{f32(cx), f32(cy - bh/2 - hw*2)},
+		rl.Vector2{f32(cx - hw/2), f32(cy - bh/2 - hw/2)},
+		rl.Color{30, 30, 30, 255},
+	)
+	rl.DrawTriangle(
+		rl.Vector2{f32(cx - hw/4), f32(cy - bh/2 - hw*2)},
+		rl.Vector2{f32(cx + hw/4), f32(cy - bh/2 - hw*2)},
+		rl.Vector2{f32(cx), f32(cy - bh/2 - hw*2 - hw/2)},
+		rl.Color{30, 30, 30, 255},
+	)
+	rl.DrawTriangle(
+		rl.Vector2{f32(cx + hw/2), f32(cy - bh/2 - hw/2)},
+		rl.Vector2{f32(cx), f32(cy - bh/2 - hw*2)},
+		rl.Vector2{f32(cx + hw), f32(cy - bh/2 - hw)},
+		rl.Color{30, 30, 30, 255},
+	)
 
-		for i in 0..<4 {
-			oy := i32(260 + i * 64)
-			bg := rl.Color{20, 40, 35, 200}
-			brd := TALK_COLOR
-			if i == g.negotiate_option {
-				bg  = {40, 80, 70, 255}
-				brd = GOLD_COLOR
-			}
-			rl.DrawRectangle(200, oy, 880, 54, bg)
-			rl.DrawRectangleLines(200, oy, 880, 54, brd)
-			prefix := "  "
-			if i == g.negotiate_option do prefix = "> "
-			draw_text(fmt.tprintf("%s%d. %s", prefix, i+1, option_strs[i]), 218, oy+16, 20, TEXT_COLOR)
-		}
+	// Eyes (looking right)
+	rl.DrawCircle(cx + hw/4, cy - bh/2 - hw/2 - 2, f32(i32(f32(4)*scale)), rl.Color{30, 30, 30, 255})
+	rl.DrawCircle(cx + hw/4 + i32(f32(9)*scale), cy - bh/2 - hw/2 - 2, f32(i32(f32(4)*scale)), rl.Color{30, 30, 30, 255})
 
-		// controls
-		draw_panel(200, 530, 880, 50, PANEL_COLOR)
-		draw_text("[1-4] or [↑↓] Select   [ENTER/A] Confirm   [ESC/B] Cancel", 220, 544, 18, TEXT_COLOR)
-
-		// alignment indicator
-		draw_panel(200, 596, 880, 46, PANEL_COLOR)
-		draw_text(fmt.tprintf("Your alignment: %s (%+d pts)  |  Enemy mood: %s",
-			alignment_name(g.summoner.alignment), g.summoner.alignment_pts,
-			alignment_name(g.enemy.talk_mood)), 220, 610, 16, TEXT_COLOR)
-	} else {
-		// result panel
-		draw_panel(200, 260, 880, 100, {15, 40, 35, 255})
-		result_col := GOLD_COLOR
-		if len(g.negotiate_result) > 0 && g.negotiate_result[0] == 'N' do result_col = WARN_COLOR
-		draw_text(g.negotiate_result, 220, 290, 22, result_col)
-
-		draw_panel(200, 380, 880, 50, PANEL_COLOR)
-		draw_text("Press ENTER to return to combat", 320, 394, 20, TEXT_COLOR)
-	}
-}
-
-// ---- fuse screen ----
-
-draw_fuse :: proc(g: ^GameState) {
-	rl.ClearBackground(DARK_BG)
-	draw_panel(0, 0, sw(), 60, PANEL_COLOR)
-	draw_text("GLYPH SHRINE — FUSION", 20, 14, 28, ACCENT_COLOR)
-	draw_text("Two spirits consumed permanently to forge one stronger.", 310, 20, 17, WARN_COLOR)
-
-	draw_panel(20, 78, 580, 576, PANEL_COLOR)
-	draw_text("SOUL SLOTS", 30, 86, 20, ACCENT_COLOR)
-
-	for i in 0..<6 {
-		sy       := i32(116 + i * 74)
-		s        := g.summoner.spirits[i]
-		selected := (i == g.fuse_idx_a || i == g.fuse_idx_b)
-		if s != nil {
-			col := spirit_type_color(s.element)
-			bg  := rl.Color{col[0]/5, col[1]/5, col[2]/5, 200}
-			brd := rl.Color{col[0], col[1], col[2], col[3]}
-			if selected { bg = {80, 60, 20, 255}; brd = GOLD_COLOR }
-			rl.DrawRectangle(30, sy, 560, 66, bg)
-			rl.DrawRectangleLines(30, sy, 560, 66, brd)
-			label := ""
-			if i == g.fuse_idx_a do label = " [A]"
-			if i == g.fuse_idx_b do label = " [B]"
-			draw_text(fmt.tprintf("[%d]%s %s  T%d  %v  Lv.%d  ATK:%d DEF:%d SPD:%d",
-				i+1, label, s.name, s.tier, s.element,
-				s.level, spirit_atk(s), spirit_def(s), spirit_spd(s)),
-				38, sy+6, 17, TEXT_COLOR)
-			draw_text(fmt.tprintf("    %s — %s", skill_name(s.skill), skill_description(s.skill)),
-				38, sy+30, 15, {180, 180, 220, 255})
-			if s.evo_level > 0 && s.level < s.evo_level {
-				draw_text(fmt.tprintf("    [evolves @ Lv.%d → %s]", s.evo_level, s.evo_name),
-					38, sy+50, 13, {120, 220, 120, 255})
-			}
-		} else {
-			rl.DrawRectangle(30, sy, 560, 66, {25, 25, 40, 180})
-			rl.DrawRectangleLines(30, sy, 560, 66, {50, 50, 70, 255})
-			draw_text(fmt.tprintf("[%d] --- empty ---", i+1), 38, sy+24, 18, {70, 70, 90, 255})
-		}
-	}
-
-	// recipes panel
-	draw_panel(618, 78, 644, 420, PANEL_COLOR)
-	draw_text("FUSION RECIPES (Tier 1 → Tier 2)", 628, 86, 18, ACCENT_COLOR)
-	recipes := [7]string{
-		"Pixie + Wisp         → Sylph",
-		"Ember Sprite + Frost Moth → Ignis",
-		"Vine Sprite + Stone Gnome → Thornwarden",
-		"Imp + Screech Bat    → Dusk Shade",
-		"Wisp + Vine Sprite   → Undine",
-		"Pixie + Ember Sprite → Seraph Fledge",
-		"(Vexor: Bind only)",
-	}
-	for r, i in recipes {
-		draw_text(r, 628, i32(114 + i * 38), 16, {180, 220, 255, 255})
-	}
-	draw_text("EVOLUTION (level-up, single spirit):", 628, 382, 16, {120, 220, 120, 255})
-	evos := [4]string{
-		"Pixie/Wisp  Lv.5 → Fairy Queen",
-		"Imp         Lv.5 → Demon Knight",
-		"Ember       Lv.5 → Magma Drake",
-		"Stone Gnome Lv.5 → Granite Titan",
-	}
-	for e, i in evos {
-		draw_text(e, 628, i32(400 + i * 22), 14, {150, 210, 150, 255})
-	}
-
-	// controls
-	draw_panel(618, 516, 644, 138, PANEL_COLOR)
-	draw_text("CONTROLS", 628, 524, 17, ACCENT_COLOR)
-	draw_text("[A] Select A slot    [B] Select B slot", 628, 548, 16, TEXT_COLOR)
-	draw_text("[1-6] Pick slot      [F] Perform Fusion", 628, 570, 16, TEXT_COLOR)
-	draw_text("[ESC] Back to explore", 628, 592, 16, TEXT_COLOR)
-	if g.fuse_idx_a >= 0 && g.fuse_idx_b >= 0 && g.fuse_idx_a != g.fuse_idx_b {
-		sa  := g.summoner.spirits[g.fuse_idx_a]
-		sb_ := g.summoner.spirits[g.fuse_idx_b]
-		if sa != nil && sb_ != nil {
-			draw_text(fmt.tprintf("Fuse: %s + %s", sa.name, sb_.name),
-				628, 620, 18, GOLD_COLOR)
-		}
-	}
-}
-
-// ---- game over / victory ----
-
-draw_game_over :: proc(g: ^GameState) {
-	rl.ClearBackground(DARK_BG)
-	rl.DrawRectangleGradientV(0, 0, sw(), sh(), {40, 5, 5, 255}, {10, 0, 0, 255})
-	cx := sw() / 2; cy := sh() / 2
-	draw_text("GAME OVER",                  cx - 190, cy - 90, 76, WARN_COLOR)
-	draw_text("Your soul has been extinguished.", cx - 240, cy + 10, 28, TEXT_COLOR)
-	draw_text(fmt.tprintf("Alignment reached: %s", alignment_name(g.summoner.alignment)),
-	                                         cx - 150, cy + 55, 22, {160, 160, 200, 255})
-	draw_text("Press ENTER to return to title", cx - 210, cy + 90, 24, {150, 150, 180, 255})
-}
-
-draw_victory :: proc(g: ^GameState) {
-	rl.ClearBackground(DARK_BG)
-	rl.DrawRectangleGradientV(0, 0, sw(), sh(), {30, 0, 60, 255}, {10, 0, 30, 255})
-	cx := sw() / 2
-	draw_text("ALL REALMS SEALED!",         cx - 260, 140, 72, BIND_COLOR)
-	draw_spirit_glyph(cx, 300, 100, .Alien, f32(rl.GetTime()))
-	draw_text("The ancient spirits are bound. Peace reigns.", cx - 300, 380, 28, GOLD_COLOR)
-	draw_text(fmt.tprintf("Summoner Lv.%d  |  Gold: %d  |  Alignment: %s",
-		g.summoner.level, g.summoner.gold, alignment_name(g.summoner.alignment)),
-		cx - 260, 430, 24, TEXT_COLOR)
-	draw_text("Press ENTER to continue.", cx - 160, 490, 24, TEXT_COLOR)
+	// Soul aura (scales with level)
+	aura_r := i32(f32(40 + g_prog.level * 3) * scale)
+	t := f32(rl.GetTime())
+	aura_a := u8(30 + int(math.sin(t*2.0)*15.0))
+	rl.DrawCircle(cx, cy, f32(aura_r), rl.Color{100, 140, 255, aura_a})
 }

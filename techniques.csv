@@ -1,0 +1,15 @@
+id,name,power,soul_cost,type
+1,Lift,30,1,Kinetic
+2,Mind Crush,30,1,Psychic
+3,Void Pull,45,3,Dark
+4,Ember Strike,40,3,Fire
+5,Tidal Slam,40,3,Water
+6,Thorn Whip,35,2,Nature
+7,Soul Surge,55,4,Psychic
+8,Blaze Torrent,65,6,Fire
+9,Crushing Wave,60,5,Water
+10,Briar Storm,50,4,Nature
+11,ElectricCharge,35,2,Fire
+12,MindFlare,80,6,Psychic
+13,SpinKick,70,3,Kinetic
+14,BlindString,50,2,Dark

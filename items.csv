@@ -1,0 +1,6 @@
+id,name,heal_hp,restore_souls,description
+1,Blood Vial,30,0,Restores 30 HP
+2,Soul Shard,0,3,Restores 3 souls
+3,Elixir,50,5,Restores 50 HP and 5 souls
+4,Mega Vial,60,0,Restores 60 HP
+5,Full Restore,999,999,Fully restores HP and souls

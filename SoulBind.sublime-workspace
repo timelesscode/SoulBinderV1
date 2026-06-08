@@ -1,0 +1,632 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"pr",
+				"printfln(fmt: string, args: ..any, flush := true) -> int"
+			],
+			[
+				"num",
+				"num2"
+			],
+			[
+				"prin",
+				"println(args: ..any, sep := \" \", flush := true) -> int"
+			],
+			[
+				"imp",
+				"import"
+			],
+			[
+				"screen",
+				"screen_W"
+			]
+		]
+	},
+	"buffers":
+	[
+		{
+			"file": "dialogue.odin",
+			"settings":
+			{
+				"buffer_size": 12388,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			},
+			"undo_stack":
+			[
+				[
+					3,
+					1,
+					"left_delete",
+					null,
+					"AQAAAEsuAAAAAAAASy4AAAAAAAABAAAAOw",
+					"AgAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPC/AAAAAAEAAABMLgAAAAAAAEwuAAAAAAAAAAAAAAAA8L8"
+				]
+			]
+		},
+		{
+			"file": "progression.odin",
+			"settings":
+			{
+				"buffer_size": 4723,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			},
+			"undo_stack":
+			[
+				[
+					8,
+					1,
+					"insert",
+					{
+						"characters": "//"
+					},
+					"AgAAAA4AAAAAAAAADwAAAAAAAAAAAAAADwAAAAAAAAAQAAAAAAAAAAAAAAA",
+					"AgAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPC/AAAAAAEAAAAOAAAAAAAAAA4AAAAAAAAAAAAAAAAA8L8"
+				]
+			]
+		},
+		{
+			"file": "data.odin",
+			"settings":
+			{
+				"buffer_size": 5789,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/C/Users/devdo/Downloads/DemonSummonerRpg-main/DemonSummonerRpg-main/main.odin",
+			"settings":
+			{
+				"buffer_size": 30112,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			},
+			"undo_stack":
+			[
+				[
+					9,
+					1,
+					"left_delete",
+					null,
+					"AQAAALk/AAAAAAAAuT8AAAAAAAABAAAAIA",
+					"AQAAAAAAAAABAAAAuj8AAAAAAAC6PwAAAAAAAAAAAAAAAPC/"
+				],
+				[
+					10,
+					1,
+					"insert",
+					{
+						"characters": ":"
+					},
+					"AQAAALk/AAAAAAAAuj8AAAAAAAAAAAAA",
+					"AQAAAAAAAAABAAAAuT8AAAAAAAC5PwAAAAAAAAAAAAAAAPC/"
+				],
+				[
+					12,
+					4,
+					"left_delete",
+					null,
+					"BAAAALk/AAAAAAAAuT8AAAAAAAABAAAAOrg/AAAAAAAAuD8AAAAAAAABAAAAcrc/AAAAAAAAtz8AAAAAAAABAAAAYbY/AAAAAAAAtj8AAAAAAAABAAAAdg",
+					"AQAAAAAAAAABAAAAuj8AAAAAAAC6PwAAAAAAAAAAAAAAAPC/"
+				]
+			]
+		},
+		{
+			"file": "main.odin",
+			"settings":
+			{
+				"buffer_size": 3521,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		}
+	],
+	"build_system": "",
+	"build_system_choices":
+	[
+	],
+	"build_varint": "",
+	"command_palette":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"Package Control: ",
+				"Package Control: Install Package"
+			],
+			[
+				"termin",
+				"Terminus: Open Default Shell in Panel"
+			],
+			[
+				"terminus: ope",
+				"Terminus: Open Default Shell in Panel"
+			],
+			[
+				"install",
+				"Package Control: Install Package"
+			]
+		],
+		"width": 0.0
+	},
+	"console":
+	{
+		"height": 0.0,
+		"history":
+		[
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"expanded_folders":
+	[
+		"/C/Users/devdo/gamedevW/Desktop/SoulBinderV0.1"
+	],
+	"file_history":
+	[
+		"/C/Users/devdo/gamedevW/Desktop/SoulBinderV0.1/main.odin",
+		"/C/Users/devdo/gamedevW/Documents/code/sublime_odin/prac.odin",
+		"/C/Users/devdo/gamedevW/Documents/Odin/dist/base/runtime/internal.odin",
+		"/C/Users/devdo/gamedevW/Documents/Odin/dist/base/runtime/core_builtin.odin",
+		"/C/Users/devdo/gamedevW/Documents/Odin/dist/vendor/raylib/raylib.odin",
+		"/C/Users/devdo/gamedevW/Documents/code/sublime_odin/SoulBender/game1/ui.odin",
+		"/C/Users/devdo/gamedevW/Documents/code/sublime_odin/SoulBender/game1/main.odin",
+		"/?wsl.localhost/Ubuntu-22.04/home/gamedev/code/ODINLANG/pokemon/main.odin",
+		"/C/Users/devdo/gamedevW/Documents/code/sublime_odin/term/main.odin",
+		"/C/Users/devdo/gamedevW/Documents/Odin/dist/core/math/linalg/doc.odin",
+		"/C/Users/devdo/gamedevW/Documents/code/sublime_odin/term/vendor/glfw/types.odin",
+		"/C/Users/devdo/gamedevW/Documents/code/sublime_odin/term/Telekinesis GDD v0.2.lines.txt",
+		"/C/Users/devdo/gamedevW/Desktop/SoulBinderV0.1/particles.odin",
+		"/C/Users/devdo/gamedevW/Desktop/SoulBinderV0.1/sb.sublime-project",
+		"/C/Users/devdo/AppData/Roaming/Sublime Text/Packages/User/c++.sublime-build",
+		"/C/Users/devdo/gamedevW/Desktop/SoulBinderV0.1/ui.odin",
+		"/C/Users/devdo/gamedevW/Desktop/SoulBinderV0.1/main.cpp",
+		"/C/Users/devdo/AppData/Roaming/Sublime Text/Packages/User/rayC-sublime.build",
+		"/C/Users/devdo/AppData/Roaming/Sublime Text/Packages/User/ray",
+		"/C/Users/devdo/gamedevW/Desktop/SoulBinderV0.1/ols.json",
+		"/C/Users/devdo/gamedevW/Documents/code/sublime_odin/project1/main.odin",
+		"/C/Users/devdo/gamedevW/Desktop/SoulBinderV0.1/sb",
+		"/C/Users/devdo/gamedevW/Desktop/SoulBinderV0.1/dialogue.odin",
+		"/C/Users/devdo/gamedevW/Desktop/SoulBinderV0.1/combat.odin",
+		"/C/Users/devdo/gamedevW/Desktop/SoulBinderV0.1/editor.odin",
+		"/C/Users/devdo/gamedevW/Documents/code/sublime_odin/project2/main.odin",
+		"/C/Users/devdo/gamedevW/Documents/code/sublime_odin/project1/editor.odin",
+		"/C/Users/devdo/gamedevW/Documents/code/sublime_odin/sublime_odin.sublime-project",
+		"/C/Users/devdo/gamedevW/Documents/Odin/dist/vendor/vulkan/_gen/vulkan_core.h",
+		"/C/Users/devdo/gamedevW/Documents/code/sublime_odin/project1/ols.json",
+		"/C/Users/devdo/gamedevW/Documents/code/sublime_odin/project1/spiritarmy.sublime-project",
+		"/C/Users/devdo/AppData/Roaming/Sublime Text/Packages/User/karl.sublime-build",
+		"/C/Users/devdo/gamedevW/Documents/code/sublime_odin/project1/hello.odin",
+		"/C/Users/devdo/AppData/Roaming/Sublime Text/Packages/User/Odin.sublime-build",
+		"/C/Users/devdo/gamedevW/Documents/code/sublime_odin/hello.odin",
+		"/C/Users/devdo/AppData/Roaming/Sublime Text/Packages/User/odin-sublime.build",
+		"/C/Users/devdo/AppData/Roaming/Sublime Text/Packages/User/odin-sublime.project.sublime-project",
+		"/C/Users/devdo/AppData/Roaming/Sublime Text/Packages/User/odin_sublime.build",
+		"/C/Users/devdo/AppData/Roaming/Sublime Text/Packages/User/odin.sublime-build",
+		"/C/Users/devdo/AppData/Roaming/Sublime Text/Packages/User/odin",
+		"/C/Users/devdo/AppData/Roaming/Sublime Text/Packages/User/odin-sublime.project.sublime-build",
+		"/C/Users/devdo/OneDrive/Documents/code/sublime_odin/sublime_odin.sublime-project",
+		"/C/Users/devdo/OneDrive/Documents/code/sublime_odin/hello.odin",
+		"/C/Users/devdo/main.odin"
+	],
+	"find":
+	{
+		"height": 27.2
+	},
+	"find_in_files":
+	{
+		"height": 0.0,
+		"where_history":
+		[
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+		],
+		"reverse": false,
+		"scrollbar_highlights": true,
+		"show_context": true,
+		"use_buffer2": true,
+		"use_gitignore": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"sheets":
+			[
+				{
+					"buffer": 0,
+					"file": "dialogue.odin",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 12388,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								11851,
+								11851
+							]
+						],
+						"settings":
+						{
+							"auto_complete_triggers":
+							[
+								{
+									"characters": "<",
+									"selector": "text.html, text.xml"
+								},
+								{
+									"rhs_empty": true,
+									"selector": "punctuation.accessor"
+								},
+								{
+									"characters": ".>#\"/:",
+									"selector": "meta.tag, source - comment - string.quoted.double.block - string.quoted.single.block - string.unquoted.heredoc",
+									"server": "ols"
+								}
+							],
+							"lsp_active": true,
+							"lsp_uri": "file:///C:/Users/devdo/gamedevW/Desktop/SoulBinderV0.1/dialogue.odin",
+							"show_definitions": false,
+							"syntax": "Packages/Odin/Odin.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 5524.8,
+						"zoom_level": 1.0
+					},
+					"stack_index": 4,
+					"stack_multiselect": false,
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "progression.odin",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 4723,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								16,
+								16
+							]
+						],
+						"settings":
+						{
+							"auto_complete_triggers":
+							[
+								{
+									"characters": "<",
+									"selector": "text.html, text.xml"
+								},
+								{
+									"rhs_empty": true,
+									"selector": "punctuation.accessor"
+								},
+								{
+									"characters": ".>#\"/:",
+									"selector": "meta.tag, source - comment - string.quoted.double.block - string.quoted.single.block - string.unquoted.heredoc",
+									"server": "ols"
+								}
+							],
+							"lsp_active": true,
+							"lsp_uri": "file:///C:/Users/devdo/gamedevW/Desktop/SoulBinderV0.1/progression.odin",
+							"show_definitions": false,
+							"syntax": "Packages/Odin/Odin.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 3,
+					"stack_multiselect": false,
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "data.odin",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 5789,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								5789
+							]
+						],
+						"settings":
+						{
+							"auto_complete_triggers":
+							[
+								{
+									"characters": "<",
+									"selector": "text.html, text.xml"
+								},
+								{
+									"rhs_empty": true,
+									"selector": "punctuation.accessor"
+								},
+								{
+									"characters": ".>#\"/:",
+									"selector": "meta.tag, source - comment - string.quoted.double.block - string.quoted.single.block - string.unquoted.heredoc",
+									"server": "ols"
+								}
+							],
+							"lsp_active": true,
+							"lsp_uri": "file:///C:/Users/devdo/gamedevW/Desktop/SoulBinderV0.1/data.odin",
+							"show_definitions": false,
+							"syntax": "Packages/Odin/Odin.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 2499.2,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"stack_multiselect": false,
+					"type": "text"
+				},
+				{
+					"buffer": 3,
+					"file": "/C/Users/devdo/Downloads/DemonSummonerRpg-main/DemonSummonerRpg-main/main.odin",
+					"selected": true,
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 30112,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								16310,
+								16310
+							]
+						],
+						"settings":
+						{
+							"auto_complete_triggers":
+							[
+								{
+									"characters": "<",
+									"selector": "text.html, text.xml"
+								},
+								{
+									"rhs_empty": true,
+									"selector": "punctuation.accessor"
+								},
+								{
+									"characters": ".>#\"/:",
+									"selector": "meta.tag, source - comment - string.quoted.double.block - string.quoted.single.block - string.unquoted.heredoc",
+									"server": "ols"
+								}
+							],
+							"lsp_active": true,
+							"lsp_uri": "file:///C:/Users/devdo/Downloads/DemonSummonerRpg-main/DemonSummonerRpg-main/main.odin",
+							"show_definitions": false,
+							"syntax": "Packages/Odin/Odin.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 9345.6,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"stack_multiselect": false,
+					"type": "text"
+				},
+				{
+					"buffer": 4,
+					"file": "main.odin",
+					"semi_transient": true,
+					"settings":
+					{
+						"buffer_size": 3521,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								91,
+								91
+							]
+						],
+						"settings":
+						{
+							"auto_complete_triggers":
+							[
+								{
+									"characters": "<",
+									"selector": "text.html, text.xml"
+								},
+								{
+									"rhs_empty": true,
+									"selector": "punctuation.accessor"
+								},
+								{
+									"characters": ".>#\"/:",
+									"selector": "meta.tag, source - comment - string.quoted.double.block - string.quoted.single.block - string.unquoted.heredoc",
+									"server": "ols"
+								}
+							],
+							"lsp_active": true,
+							"lsp_uri": "file:///C:/Users/devdo/gamedevW/Desktop/SoulBinderV0.1/main.odin",
+							"show_definitions": false,
+							"syntax": "Packages/Odin/Odin.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 2,
+					"stack_multiselect": false,
+					"type": "text"
+				}
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 27.2
+	},
+	"input":
+	{
+		"height": 40.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.LSP Log Panel":
+	{
+		"height": 0.0,
+		"history":
+		[
+		]
+	},
+	"output.diagnostics":
+	{
+		"height": 0.0,
+		"history":
+		[
+		]
+	},
+	"output.exec":
+	{
+		"height": 429.0,
+		"history":
+		[
+		]
+	},
+	"output.find_results":
+	{
+		"height": 0.0,
+		"history":
+		[
+		]
+	},
+	"pinned_build_system": "sublime_odin_template",
+	"project": "SoulBind.sublime-project",
+	"replace":
+	{
+		"height": 51.2
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"vulkan",
+				"vendor\\vulkan\\_gen\\vulkan_core.h"
+			],
+			[
+				"raylib",
+				"C:\\Users\\devdo\\gamedevW\\Documents\\Odin\\dist\\vendor\\raylib\\raylib.odin"
+			]
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_symbol":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"selected_group": 0,
+	"settings":
+	{
+		"lsp_show_inlay_hints": false
+	},
+	"show_minimap": true,
+	"show_open_files": true,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 262.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}

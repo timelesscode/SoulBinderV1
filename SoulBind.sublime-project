@@ -1,0 +1,36 @@
+{
+	"folders":
+	[
+		{
+			"path": ".",
+		},
+		{
+			"path": "C:\\Users\\devdo\\gamedevW\\Documents\\Odin\\dist\\base",
+		},
+		{
+			"path": "C:\\Users\\devdo\\gamedevW\\Documents\\Odin\\dist\\core",
+		},
+		{
+			"path": "C:\\Users\\devdo\\gamedevW\\Documents\\Odin\\dist\\vendor"
+		},
+	],
+	"build_systems":
+	[ 
+		{
+		"name":"sublime_odin_template",
+		"cmd": "odin run . -strict-style -vet",
+		"file_regex": "^(.+)\\(([0-9]+):([0-9]+)\\) (.+)$",
+		}
+	],
+	"settings": 
+	{
+		"auto_complete": true,
+		"LSP":
+		{
+			"odin":
+			{
+				"enabled": true,
+			},
+		},
+	},
+}
